@@ -3,7 +3,8 @@ package com.pipilong.enums;
 
 
 public enum ProtocolType {
-    IPv4, ARP, IPv6, ICMP, IGMP, IP, TCP, EGP, IGP, UDP, ESP, AH, ICMP_IPv6, OSPF, ETHERNET;
+    IPv4, ARP, IPv6, ICMP, IGMP, IP, TCP, EGP, IGP, UDP, ESP, AH, ICMP_IPv6, OSPF, ETHERNET,
+    HTTP, HTTPS, SSH, Telnet, SMTP, POP3, IMAP, DNS, FTPController, FTPData;
     public static ProtocolType getProtocol(String type){
         if("80".equals(type)){
             return IPv4;
@@ -29,8 +30,59 @@ public enum ProtocolType {
             case 51 : return AH;
             case 58 : return ICMP_IPv6;
             case 89 : return OSPF;
-            default:return null;
+            default: return null;
+        }
+    }
+
+    public static ProtocolType getProtocolByPort(int port){
+        switch (port){
+            case 80: return HTTP;
+            case 443: return HTTPS;
+            case 20: return FTPData;
+            case 21: return FTPController;
+            case 22: return SSH;
+            case 23: return Telnet;
+            case 25: return SMTP;
+            case 110: return POP3;
+            case 143: return IMAP;
+            case 53: return DNS;
+            default: return null;
         }
     }
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

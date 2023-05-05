@@ -52,6 +52,21 @@ public class AbstractParser implements Parser {
         }
         return res;
     }
+    /**
+     * 根据指定位置将字节类型的数据转换为整型 -- 正序执行
+     * @param data 要解析的数据
+     * @param size 长度
+     * @return 解析后的结果
+     */
+    protected int convertToIntByOffset(byte[] data,int size,int position){
+        int res=0;
+        int leftMove;
+        for(int i=1;i<=size;i++){
+            leftMove = 8 * (size - i);
+            res = res | ((data[position++] & 0xff) << leftMove);
+        }
+        return res;
+    }
 
     /**
      * 将字节类型的数据转换为整型 -- 逆序执行
@@ -86,4 +101,24 @@ public class AbstractParser implements Parser {
         }
         return res;
     }
+
+    /**
+     * 将字节类型数据转化为字符串类型
+     * @param data 要解析的数据
+     * @param size 长度
+     * @return 解析后的结果
+     */
+    protected String convertToString(byte[] data,int size,int position){
+        byte[] t=new byte[size];
+        for(int i=0;i<size;i++){
+            t[i] = data[position++];
+        }
+        return new String(t);
+    }
+
+
+
+
+
+
 }

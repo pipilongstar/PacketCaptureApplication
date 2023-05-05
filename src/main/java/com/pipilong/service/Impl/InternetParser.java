@@ -54,7 +54,7 @@ public class InternetParser extends AbstractParser {
         System.out.println("identification:"+identification+"  flag:"+flag+"  offset:"+offset);
         System.out.println("ttl:"+ttl+"  protocol:"+protocol+"  headerCheckSum:"+headerCheckSum);
         System.out.println("sourceAddress:"+sourceAddress);
-        System.out.println("destinationAddress:"+destinationAddress+"\n");
+        System.out.println("destinationAddress:"+destinationAddress);
 
         return new ParserResult(true,protocol,headerLength * 4);
     }

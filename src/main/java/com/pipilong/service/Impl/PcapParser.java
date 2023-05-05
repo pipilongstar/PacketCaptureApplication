@@ -18,6 +18,10 @@ public class PcapParser extends AbstractParser {
 
     private final Parser internetParser = new InternetParser();
 
+    private final Parser transportParser = new TransportParser();
+
+    private final Parser applicationLayerParser = new ApplicationLayerParser();
+
     public void parser(byte[] data) {
         byte magic1 = data[pointer];
         if (magic1 == (byte) 161) {
@@ -58,8 +62,15 @@ public class PcapParser extends AbstractParser {
 //            if(internetResult.getNextProtocol() == null){
 //                continue;
 //            }
+            //解析数据部分的传输层
+            ParserResult transportResult = transportParser.parser(data, internetResult.getNextProtocol(), pointer);
+            pointer += transportResult.getDataLength();
+            //解析数据部分的应用层
+            ParserResult applicationLayerResult = applicationLayerParser.parser(data, transportResult.getNextProtocol(), pointer);
+            pointer += applicationLayerResult.getDataLength();
             //调整指针位置
-            pointer += (capLen - ethernetResult.getDataLength() - internetResult.getDataLength());
+            pointer += (capLen - ethernetResult.getDataLength() - internetResult.getDataLength()-transportResult.getDataLength()-applicationLayerResult.getDataLength());
+            System.out.print("\n");
         } while (pointer < data.length);
 
     }
