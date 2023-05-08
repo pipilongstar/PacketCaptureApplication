@@ -3,25 +3,34 @@ package com.pipilong;
 import com.pipilong.service.Impl.FileReader;
 import com.pipilong.service.Impl.MMap;
 import com.pipilong.service.Impl.PcapParser;
+import com.pipilong.service.Impl.RawPacketCapturer;
+import org.apache.catalina.core.ApplicationContext;
+import org.pcap4j.core.NotOpenException;
+import org.pcap4j.core.PcapNativeException;
+import org.pcap4j.core.PcapNetworkInterface;
+import org.pcap4j.core.Pcaps;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.context.annotation.EnableAspectJAutoProxy;
+import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
 import java.io.IOException;
 import java.io.InputStream;
 
 @SpringBootApplication
+@EnableAsync
+@EnableCaching
+@EnableAspectJAutoProxy
+@EnableWebMvc
 public class PacketCaptureApplication {
-    @Autowired
-    PcapParser pcapParser;
-    @Autowired
-    MMap mMap;
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
+
         SpringApplication.run(PacketCaptureApplication.class, args);
-        PcapParser pcapParser = new PcapParser();
-        MMap mMap = new MMap();
-        byte[] data = mMap.read("D:\\抓包软件\\第八天\\day8.pcap.txt");
-        pcapParser.parser(data);
+
     }
 
 }

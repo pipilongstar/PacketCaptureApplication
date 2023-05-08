@@ -5,6 +5,7 @@ import com.pipilong.enums.DNSType;
 import com.pipilong.enums.ProtocolType;
 import com.pipilong.service.abstracts.AbstractParser;
 import javafx.util.Pair;
+import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -14,19 +15,21 @@ import java.util.Map;
  * @createTime 2023/5/5
  * @description
  */
+@Service
 public class ApplicationLayerParser extends AbstractParser {
     private final StringBuilder nameBuilder = new StringBuilder();
     private Pair<String,Integer> res;
-    private final Map<Integer,String> cache = new HashMap<>();
+    private final Map<Integer,String> dnsCache = new HashMap<>();
     private int startPosition;
     @Override
     public ParserResult parser(byte[] data, ProtocolType protocol, int position) {
         System.out.println("-----ApplicationLayer:"+protocol);
         this.startPosition = position;
-        this.pointer = position;
+        pointer.set(position);
         if(protocol == ProtocolType.HTTP){
             return httpParser(data);
         }else if(protocol == ProtocolType.DNS){
+            dnsCache.clear();
             return dnsParser(data);
         }
 
@@ -119,27 +122,29 @@ public class ApplicationLayerParser extends AbstractParser {
     private Pair<Integer,DNSType> dnsRRParser(byte[] data,String RRType,int id){
         int totalLength = 0;
         //判断是否为压缩表示法
-        byte isCompress = data[pointer];
+        byte isCompress = data[pointer.get()];
         int position;
         //计算name所在dns报文中的偏移位置
-        if((isCompress & 0xff) != 0xc0) position = pointer;
-        else position = startPosition+(data[pointer+1] & 0xff);
+        if((isCompress & 0xff) != 0xc0) position = pointer.get();
+        else position = startPosition+(data[pointer.get()+1] & 0xff);
         String name ;
-        if(cache.get(position) != null) {
-            name = cache.get(position);
+        if(dnsCache.get(position) != null) {
+            name = dnsCache.get(position);
         }else{
             //解析name字段
             res = dnsParseName(data,position,-1);
             name = res.getKey();
-            cache.put(position,name);
+            dnsCache.put(position,name);
         }
         //重置指针位置
         if((isCompress & 0xff) != 0xc0) {
-            pointer += res.getValue();
+            pointer.set(pointer.get()+res.getValue());
+//            pointer += res.getValue();
             totalLength += res.getValue();
         }
         else {
-            pointer += 2;
+            pointer.set(pointer.get()+2);
+//            pointer += 2;
             totalLength += 2;
         }
         //查询类型
@@ -169,24 +174,24 @@ public class ApplicationLayerParser extends AbstractParser {
                 if(i!=8) dataInfo+=":";
             }
         }else if(type == DNSType.CNAME || type == DNSType.MX || type == DNSType.NS){
-            byte isCompress = data[pointer];
+            byte isCompress = data[pointer.get()];
             int position;
             //计算name所在dns报文中的偏移位置
-            if((isCompress & 0xff) != 0xc0) position = pointer;
-            else position = startPosition+(data[pointer+1] & 0xff);
+            if((isCompress & 0xff) != 0xc0) position = pointer.get();
+            else position = startPosition+(data[pointer.get()+1] & 0xff);
             //解析name字段
-            if(cache.get(position) != null){
-                dataInfo = cache.get(position);
+            if(dnsCache.get(position) != null){
+                dataInfo = dnsCache.get(position);
             }else{
                 res = dnsParseName(data,position,dataLength);
                 dataInfo = res.getKey();
-                cache.put(position,dataInfo);
+                dnsCache.put(position,dataInfo);
             }
 
-            if((isCompress & 0xff) != 0xc0) pointer += res.getValue();
-            else pointer += 2;
+            if((isCompress & 0xff) != 0xc0) pointer.set(pointer.get()+res.getValue());
+            else pointer.set(pointer.get()+2);
         }else if(type == DNSType.TXT){
-            dataInfo = convertToString(data, dataLength, pointer);
+            dataInfo = convertToString(data, dataLength, pointer.get());
         }
         System.out.println("ttl:"+ttl+"  dataLength:"+dataLength);
         System.out.println(type+":"+dataInfo);

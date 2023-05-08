@@ -15,22 +15,59 @@ public class InternetParser extends AbstractParser {
     @Override
     public ParserResult parser(byte[] data, ProtocolType protocol, int position) {
         System.out.println("-----internet:"+protocol);
-        this.pointer = position;
+        this.pointer.set(position);
         if(protocol == ProtocolType.IPv4){
            return ipv4Parser(data);
         }else if(protocol == ProtocolType.ARP){
             return arpParser(data);
+        }else if(protocol == ProtocolType.IPv6){
+            return ipv6Parser(data);
         }
         return new ParserResult(true,null,0);
     }
 
+    private ParserResult ipv6Parser(byte[] data) {
+        int versionAndTrafficClassAndFlowLabel = convertToInt(data,4);
+        //版本号
+        int version = versionAndTrafficClassAndFlowLabel >>> 28;
+        //通信号类
+        int trafficClass = (versionAndTrafficClassAndFlowLabel >>> 20) & 0xff;
+        //游标号
+        int flowLabel = versionAndTrafficClassAndFlowLabel & 0xfffff;
+        int payLoadLength = convertToInt(data,2);
+        int nextHeader = convertToInt(data,1);
+        ProtocolType protocolType = ProtocolType.getProtocol(nextHeader);
+        int hopLimit = convertToInt(data,1);
+        String sourceAddress = "";
+        for(int i=1;i<=8;i++){
+            sourceAddress += dataParser(data,2,"",true);
+            if(i != 8){
+                sourceAddress += ":";
+            }
+        }
+        String destinationAddress = "";
+        for(int i=1;i<=8;i++){
+            destinationAddress += dataParser(data,2,"",true);
+            if(i != 8){
+                destinationAddress += ":";
+            }
+        }
+        System.out.println("version:"+version+"  trafficClass:"+trafficClass+"  flowLabel:"+flowLabel);
+        System.out.println("payLoadLength:"+payLoadLength+"  nextHeader:"+protocolType+"  hopLimit:"+hopLimit);
+        System.out.println("sourceAddress:"+sourceAddress);
+        System.out.println("destinationAddress:"+destinationAddress);
+        return new ParserResult(true,protocolType,40);
+    }
+
     private ParserResult ipv4Parser(byte[] data){
         //版本和首部长度
-        byte versionAndHeaderLength=data[pointer++];
+        byte versionAndHeaderLength=data[pointer.get()];
+        pointer.set(pointer.get()+1);
         int version = (versionAndHeaderLength & 0xf0)>>>4;
         int headerLength = (versionAndHeaderLength & 0x0f);
         //区分服务
-        int differentService = (data[pointer++] & 0xff);
+        int differentService = (data[pointer.get()] & 0xff);
+        pointer.set(pointer.get()+1);
         //总长度
         int totalLength = convertToInt(data,2);
         //标识

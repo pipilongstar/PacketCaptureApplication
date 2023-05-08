@@ -4,7 +4,7 @@ package com.pipilong.enums;
 
 public enum ProtocolType {
     IPv4, ARP, IPv6, ICMP, IGMP, IP, TCP, EGP, IGP, UDP, ESP, AH, ICMP_IPv6, OSPF, ETHERNET,
-    HTTP, HTTPS, SSH, Telnet, SMTP, POP3, IMAP, DNS, FTPController, FTPData;
+    HTTP, HTTPS, SSH, Telnet, SMTP, POP3, IMAP, DNS, FTPController, FTPData, MDNS;
     public static ProtocolType getProtocol(String type){
         if("80".equals(type)){
             return IPv4;
@@ -46,6 +46,7 @@ public enum ProtocolType {
             case 110: return POP3;
             case 143: return IMAP;
             case 53: return DNS;
+            case 5353: return MDNS;
             default: return null;
         }
     }
