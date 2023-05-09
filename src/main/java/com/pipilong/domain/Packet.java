@@ -1,7 +1,10 @@
 package com.pipilong.domain;
 
+import com.pipilong.enums.ProtocolType;
 import lombok.Data;
 import org.springframework.stereotype.Component;
+
+import java.io.Serializable;
 
 /**
  * @author pipilong
@@ -10,11 +13,14 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Data
-public class Packet {
+public class Packet implements Serializable {
 
-    long highTimestamp;
-    long lowTimestamp;
-    long capLen;
-    long len;
+    int id;
+    String time;
+    String sourceIP;
+    String destinationIP;
+    ProtocolType protocol;
+    int length;
+    String info;
 
 }

@@ -16,7 +16,7 @@ public class TransportParser extends AbstractParser {
     @Override
     public ParserResult parser(byte[] data, ProtocolType protocol, int position) {
         System.out.println("-----transport:"+protocol);
-        pointer.set(position);
+        pointer = position;
         if(protocol == ProtocolType.UDP){
             return udpParser(data);
         }else if(protocol == ProtocolType.TCP){

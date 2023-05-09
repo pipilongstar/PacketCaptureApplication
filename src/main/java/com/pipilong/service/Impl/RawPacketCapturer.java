@@ -1,4 +1,5 @@
 package com.pipilong.service.Impl;
+
 import com.pipilong.listener.Impl.DataPacketListener;
 import com.pipilong.listener.Listener;
 import lombok.extern.slf4j.Slf4j;
@@ -21,22 +22,25 @@ import java.util.List;
 @Service
 @Slf4j
 public class RawPacketCapturer {
-    private volatile boolean flag;
 
     private final Listener dataPacketListener;
     private final List<Listener> listeners = new ArrayList<>();
     private PcapHandle handle;
+
+    private int id;
     @Autowired
-    public RawPacketCapturer(Listener dataPacketListener){
-        this.dataPacketListener= dataPacketListener;
+    public RawPacketCapturer(Listener dataPacketListener) {
+        this.dataPacketListener = dataPacketListener;
+        id = 0;
     }
+
     public void start(PcapNetworkInterface network) throws PcapNativeException, NotOpenException, InterruptedException {
-        flag=true;
-        int snapLen =65536;//所能捕获的最大长度
-        int timeout =10;//捕获的超时时间 单位是s
+        int snapLen = 65536;//所能捕获的最大长度
+        int timeout = 10;//捕获的超时时间 单位是s
         this.handle = network.openLive(snapLen, PcapNetworkInterface.PromiscuousMode.PROMISCUOUS, timeout);
 
-        PacketListener listener =pcapPacket -> {
+        PacketListener listener = pcapPacket -> {
+
             byte[] packetData = pcapPacket.getRawData();
             byte[] packetHeader = new byte[16];
             //包头是用小端存数据
@@ -44,45 +48,44 @@ public class RawPacketCapturer {
             //生成日期
             OffsetDateTime currentTimestamp = OffsetDateTime.parse(pcapPacket.getTimestamp().toString(), DateTimeFormatter.ISO_DATE_TIME);
             long seconds = currentTimestamp.toEpochSecond();
-            position=3;
-            for(int i=0;i<4;i++){
+            position = 3;
+            for (int i = 0; i < 4; i++) {
                 packetHeader[position--] = (byte) ((seconds >> (24 - i * 8)) & 0xff);
             }
-            position=7;
+            position = 7;
             int nanos = currentTimestamp.getNano();
-            for(int i=0;i<4;i++){
+            for (int i = 0; i < 4; i++) {
                 packetHeader[position--] = (byte) ((nanos >> (24 - i * 8)) & 0xff);
             }
             //生成报文长度
-            position=11;
+            position = 11;
             int capLen = packetData.length;
             int Len = packetData.length;
-            for(int i=0;i<4;i++){
+            for (int i = 0; i < 4; i++) {
                 packetHeader[position--] = (byte) ((capLen >> (24 - i * 8)) & 0xff);
             }
-            position=15;
-            for(int i=0;i<4;i++){
+            position = 15;
+            for (int i = 0; i < 4; i++) {
                 packetHeader[position--] = (byte) ((Len >> (24 - i * 8)) & 0xff);
             }
             //解析数据
-            dataPacketListener.parse(packetHeader,packetData);
+            dataPacketListener.parse(packetHeader, packetData, id++);
+
 //            for(Listener l : listeners){
 //                log.info("aaa");
 //                l.parse(packetHeader,packetData);
 //            }
         };
 
-        handle.loop(2000,listener);
+        handle.loop(-1, listener);
     }
 
-    public void close(){
-        if(flag){
-            handle.close();
-            flag=false;
-        }
+    public void close() {
+        handle.close();
+        id=0;
     }
 
-    public void addListener(Listener listener){
+    public void addListener(Listener listener) {
         listeners.add(listener);
     }
 

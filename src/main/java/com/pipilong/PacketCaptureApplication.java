@@ -17,6 +17,7 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+import org.springframework.web.socket.config.annotation.EnableWebSocket;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,7 +26,7 @@ import java.io.InputStream;
 @EnableAsync
 @EnableCaching
 @EnableAspectJAutoProxy
-@EnableWebMvc
+@EnableWebSocket
 public class PacketCaptureApplication {
     public static void main(String[] args) {
 

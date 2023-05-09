@@ -1,5 +1,8 @@
 package com.pipilong.listener.Impl;
 
+import com.alibaba.fastjson.JSON;
+import com.pipilong.domain.Packet;
+import com.pipilong.handler.DataHandler;
 import com.pipilong.listener.Listener;
 import com.pipilong.service.Impl.RawPacketCapturer;
 import com.pipilong.service.Impl.RawPacketParser;
@@ -9,8 +12,10 @@ import org.pcap4j.core.PacketListener;
 import org.pcap4j.core.PcapPacket;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.socket.TextMessage;
 
 import javax.annotation.Resource;
+import java.io.IOException;
 import java.util.Arrays;
 
 /**
@@ -23,21 +28,31 @@ import java.util.Arrays;
 public class DataPacketListener implements Listener {
 
     @Autowired
-    private Parser rawPacketParser;
+    private RawPacketParser rawPacketParser;
 
-    public DataPacketListener(){
+    private final DataHandler dataHandler;
+
+    @Autowired
+    public DataPacketListener(DataHandler dataHandler){
+        this.dataHandler = dataHandler;
 //        this.rawPacketParser=rawPacketParser;
 //        rawPacketCapturer.addListener(this);
 //        this.rawPacketParser = rawPacketParser;
     }
 
     @Override
-    public void parse(byte[] packetHeader, byte[] packetData) {
+    public void parse(byte[] packetHeader, byte[] packetData, int id) {
         byte[] data = new byte[packetHeader.length+packetData.length];
         System.arraycopy(packetHeader,0,data,0,packetHeader.length);
         System.arraycopy(packetData,0,data,packetHeader.length,packetData.length);
 
-        rawPacketParser.parser(data);
+        Packet packet = rawPacketParser.parser(data,id);
+        String message = JSON.toJSONString(packet);
+        try {
+            DataHandler.sentData(new TextMessage(message,false));
+        } catch (Exception e) {
+            log.error(e.getMessage());
+        }
     }
 
 }

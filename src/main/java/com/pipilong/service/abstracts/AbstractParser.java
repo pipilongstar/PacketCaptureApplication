@@ -12,15 +12,12 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class AbstractParser implements Parser {
-    protected ThreadLocal<Integer> pointer = new ThreadLocal<>();
-//    protected int pointer =0;
+    protected int pointer =0;
 
     protected StringBuffer builder = new StringBuffer();
     @Override
     public ParserResult parser(byte[] data, ProtocolType protocol, int position){return null;}
 
-    @Override
-    public void parser(byte[] data) {}
 
     /**
      * 按顺序解析数据
@@ -35,8 +32,7 @@ public class AbstractParser implements Parser {
         for(int i=1;i<=size;i++){
 //            byte b = data[pointer.get()];
 //            pointer.set(pointer.get()+1);
-            byte b = data[pointer.get()];
-            pointer.set(pointer.get()+1);
+            byte b = data[pointer++];
             if(isHex) builder.append(Integer.toHexString(b & 0xFF));
             else builder.append(b & 0xFF);
             if(i!=size) builder.append(separator);
@@ -57,9 +53,7 @@ public class AbstractParser implements Parser {
         int leftMove;
         for(int i=1;i<=size;i++){
             leftMove = 8 * (size - i);
-            res = res | ((data[pointer.get()] & 0xff) << leftMove);
-            pointer.set(pointer.get()+1);
-//            pointer.set(pointer.get()+1);
+            res = res | ((data[pointer++] & 0xff) << leftMove);
         }
         return res;
     }
@@ -87,7 +81,7 @@ public class AbstractParser implements Parser {
      */
     protected int convertToInt(byte[] data,int position,int size){
 //        pointer.set(pointer.get()+size);//更新字节数组中的指针位置。
-        pointer.set(pointer.get()+size);
+        pointer += size;
         int res=0;
         int leftMove;
         while((size--)>0){
@@ -105,7 +99,7 @@ public class AbstractParser implements Parser {
      */
     protected long convertToLong(byte[] data,int position,int size){
 //        pointer += size; //更新字节数组中的指针位置。
-        pointer.set(pointer.get()+size);
+        pointer += size;
 
         long res=0;
         int leftMove;

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>实时数据展示</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.5.2/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="../static/index.css">
+    <!--    <script src="https://cdn.jsdelivr.net/npm/stompjs@7.3.0/dist/stomp.min.js"></script>-->
+    <!--    <script src="https://cdn.jsdelivr.net/npm/stompjs@7.3.0/dist/stomp.min.js"></script>-->
+
+    <script>
+        $(document).ready(function (data) {
+            var socket = new WebSocket("ws://localhost:8080/data"); // WebSocket的URL，根据实际情况进行修改
+
+            socket.onmessage = function (event) {
+                const data = JSON.parse(event.data);
+                console.log(data);
+                // 处理接收到的数据，并更新页面
+                updateData(data);
+            };
+
+            // $('form').submit(function(event) {
+            //     event.preventDefault(); // 阻止表单的默认提交行为
+            //
+            //     var name = $('#name').val();
+            //     var email = $('#email').val();
+            //
+            //     // 构造要发送的消息对象
+            //     const message = {
+            //         name: name,
+            //         email: email
+            //     };
+            //
+            //     // 使用 WebSocket 的 session 变量发送消息
+            //     socket.send(message);
+            // });
+
+        });
+
+        function updateData(data) {
+            // 根据接收到的数据更新页面上的内容
+            // 例如，将数据添加到表格中
+            const row = "<tr><td>" + data.id + "</td><td>" + data.time + "</td><td>" + data.protocol + "</td><td>" + data.length + "</td></tr>";
+            $("#data-table tbody").append(row);
+        }
+
+    </script>
+    <script>
+        function sendAsyncMessage(event) {
+            // 使用axios发送异步POST请求
+            axios.post('/packetCapture/' + event.target.id).then(function (response) {
+                console.log(response.data); // 处理服务器响应
+            })
+                .catch(function (error) {
+                    console.error(error); // 处理请求错误
+                });
+        }
+    </script>
+</head>
+<body>
+<header>
+    <a href="https://github.com/pipilongstar" target="_blank">
+        <img src="https://github.com/favicon.ico" alt="GitHub">
+    </a>
+    <h1>抓包软件</h1>
+</header>
+
+<div class="container">
+    <div class="form-style">
+        <form id="open" onsubmit="sendAsyncMessage(event); return false;">
+            <button type="submit" class="styled-button">开始捕获</button>
+        </form>
+        <form id="open1" onsubmit="sendAsyncMessage(event); return false;">
+            <button type="submit" class="styled-button">导出文件</button>
+        </form>
+    </div>
+    <div class="form-style">
+        <form id="close" onsubmit="sendAsyncMessage(event); return false;">
+            <button type="submit" class="styled-button">停止捕获</button>
+        </form>
+        <form id="close2" onsubmit="sendAsyncMessage(event); return false;">
+            <button type="submit" class="styled-button">设置过滤</button>
+        </form>
+    </div>
+
+
+</div>
+
+<table id="data-table">
+    <thead>
+    <tr>
+        <th>Id</th>
+        <th>Time</th>
+        <th>Protocol</th>
+        <th>Length</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td>0</td>
+        <td>2023-5-8 20:21:21.123211</td>
+        <td>TCP</td>
+        <td>31Byte</td>
+    </tr>
+    <tr>
+        <td>1</td>
+        <td>2023-5-8 20:21:21.143211</td>
+        <td>DNS</td>
+        <td>54Byte</td>
+    </tr>
+    <tr>
+        <td>1</td>
+        <td>2023-5-8 20:21:21.143211</td>
+        <td>DNS</td>
+        <td>54Byte</td>
+    </tr>
+    <tr>
+        <td>1</td>
+        <td>2023-5-8 20:21:21.143211</td>
+        <td>DNS</td>
+        <td>54Byte</td>
+    </tr>
+    <tr>
+        <td>1</td>
+        <td>2023-5-8 20:21:21.143211</td>
+        <td>DNS</td>
+        <td>54Byte</td>
+    </tr>
+    <tr>
+        <td>1</td>
+        <td>2023-5-8 20:21:21.143211</td>
+        <td>DNS</td>
+        <td>54Byte</td>
+    </tr>
+    <!-- 这里将动态添加数据行 -->
+    </tbody>
+</table>
+</body>
+</html>

@@ -14,6 +14,5 @@ public interface Parser {
 
     ParserResult parser(byte[] data, ProtocolType protocol, int position);
 
-    void parser(byte[] data);
 
 }

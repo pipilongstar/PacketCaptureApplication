@@ -7,6 +7,6 @@ package com.pipilong.listener;
  */
 public interface Listener {
 
-    void parse(byte[] packetHeader,byte[] packetData);
+    void parse(byte[] packetHeader,byte[] packetData, int id);
 
 }

@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 public class EthernetParser extends AbstractParser {
     @Override
     public ParserResult parser(byte[] data, ProtocolType protocol, int position) {
-        this.pointer.set(position);
+        this.pointer = position;
         //解析目的MAC
         String destination = dataParser(data,6,"-",true);
         //解析源MAC

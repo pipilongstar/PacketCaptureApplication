@@ -15,7 +15,7 @@ public class InternetParser extends AbstractParser {
     @Override
     public ParserResult parser(byte[] data, ProtocolType protocol, int position) {
         System.out.println("-----internet:"+protocol);
-        this.pointer.set(position);
+        this.pointer = position;
         if(protocol == ProtocolType.IPv4){
            return ipv4Parser(data);
         }else if(protocol == ProtocolType.ARP){
@@ -61,13 +61,13 @@ public class InternetParser extends AbstractParser {
 
     private ParserResult ipv4Parser(byte[] data){
         //版本和首部长度
-        byte versionAndHeaderLength=data[pointer.get()];
-        pointer.set(pointer.get()+1);
+        byte versionAndHeaderLength=data[pointer];
+        pointer++;
         int version = (versionAndHeaderLength & 0xf0)>>>4;
         int headerLength = (versionAndHeaderLength & 0x0f);
         //区分服务
-        int differentService = (data[pointer.get()] & 0xff);
-        pointer.set(pointer.get()+1);
+        int differentService = (data[pointer] & 0xff);
+        pointer++;
         //总长度
         int totalLength = convertToInt(data,2);
         //标识
