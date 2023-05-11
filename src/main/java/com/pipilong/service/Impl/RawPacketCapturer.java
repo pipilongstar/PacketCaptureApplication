@@ -1,18 +1,17 @@
 package com.pipilong.service.Impl;
 
-import com.pipilong.listener.Impl.DataPacketListener;
+import com.pipilong.exception.DataLengthOverException;
 import com.pipilong.listener.Listener;
 import lombok.extern.slf4j.Slf4j;
 import org.pcap4j.core.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.nio.ByteBuffer;
-import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.*;
 
 /**
  * @author pipilong
@@ -27,21 +26,36 @@ public class RawPacketCapturer {
     private final List<Listener> listeners = new ArrayList<>();
     private PcapHandle handle;
 
-    private int id;
+    private final int TOTAL_LENGTH = 100*1024*1024;
+    private volatile byte[] data = new byte[TOTAL_LENGTH];
+    private final ThreadPoolExecutor executor =new ThreadPoolExecutor(
+            1,
+            1,
+            60,
+            TimeUnit.SECONDS,
+            new ArrayBlockingQueue<>(10000));
+    private int id = 1;
+    private int pointer = 0;
     @Autowired
     public RawPacketCapturer(Listener dataPacketListener) {
         this.dataPacketListener = dataPacketListener;
-        id = 0;
+        initDataArray();
     }
 
     public void start(PcapNetworkInterface network) throws PcapNativeException, NotOpenException, InterruptedException {
+
         int snapLen = 65536;//所能捕获的最大长度
         int timeout = 10;//捕获的超时时间 单位是s
         this.handle = network.openLive(snapLen, PcapNetworkInterface.PromiscuousMode.PROMISCUOUS, timeout);
 
         PacketListener listener = pcapPacket -> {
-
-            byte[] packetData = pcapPacket.getRawData();
+            byte[] packetData;
+            if(Thread.currentThread().isInterrupted()){
+                handle.close();
+                return ;
+            }else{
+                packetData = pcapPacket.getRawData();
+            }
             byte[] packetHeader = new byte[16];
             //包头是用小端存数据
             int position;
@@ -53,7 +67,7 @@ public class RawPacketCapturer {
                 packetHeader[position--] = (byte) ((seconds >> (24 - i * 8)) & 0xff);
             }
             position = 7;
-            int nanos = currentTimestamp.getNano();
+            int nanos = currentTimestamp.getNano()/1000;
             for (int i = 0; i < 4; i++) {
                 packetHeader[position--] = (byte) ((nanos >> (24 - i * 8)) & 0xff);
             }
@@ -71,6 +85,21 @@ public class RawPacketCapturer {
             //解析数据
             dataPacketListener.parse(packetHeader, packetData, id++);
 
+            if(pointer+packetData.length+packetHeader.length <= TOTAL_LENGTH){
+                for(byte b : packetHeader){
+                    data[pointer++] = b;
+                }
+                for(byte b : packetData){
+                    data[pointer++] = b;
+                }
+            }else {
+                handle.close();
+                try {
+                    throw new DataLengthOverException("捕获数据包数量上限！");
+                } catch (DataLengthOverException e) {
+                    throw new RuntimeException(e);
+                }
+            }
 //            for(Listener l : listeners){
 //                log.info("aaa");
 //                l.parse(packetHeader,packetData);
@@ -82,11 +111,32 @@ public class RawPacketCapturer {
 
     public void close() {
         handle.close();
-        id=0;
+        id=1;
     }
 
     public void addListener(Listener listener) {
         listeners.add(listener);
+    }
+
+    public void initDataArray(){
+        pointer = 0;
+        id=1;
+        data = new byte[TOTAL_LENGTH];
+        int[] t = {0xd4,0xc3,0xb2,0xa1,0x02,0x00,0x04,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x04,0x00,0x01,0x00,0x00,0x00};
+        for(int i : t){
+            data[pointer++] = (byte) i;
+        }
+    }
+
+    public byte[] getDataArray(){
+        byte[] res = new byte[pointer];
+        System.arraycopy(data,0,res,0,pointer);
+        initDataArray();
+        return res;
+    }
+
+    public void clearDataArray(){
+        initDataArray();
     }
 
 

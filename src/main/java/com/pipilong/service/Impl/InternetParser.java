@@ -56,6 +56,10 @@ public class InternetParser extends AbstractParser {
         System.out.println("payLoadLength:"+payLoadLength+"  nextHeader:"+protocolType+"  hopLimit:"+hopLimit);
         System.out.println("sourceAddress:"+sourceAddress);
         System.out.println("destinationAddress:"+destinationAddress);
+        packet.setSource(sourceAddress);
+        packet.setDestination(destinationAddress);
+        packet.setProtocol(ProtocolType.IPv6);
+        packet.setInfo("payloadLength:"+payLoadLength+"  nextHeader:"+protocolType+"  hopLimit:"+hopLimit);
         return new ParserResult(true,protocolType,40);
     }
 
@@ -87,6 +91,12 @@ public class InternetParser extends AbstractParser {
         String sourceAddress = dataParser(data,4,".",false);
         //目的地址
         String destinationAddress = dataParser(data,4,".",false);
+
+        packet.setSource(sourceAddress);
+        packet.setDestination(destinationAddress);
+        packet.setProtocol(ProtocolType.IPv4);
+        packet.setInfo("identification:"+identification+"  flag:"+flag+"  offset:"+offset);
+
         System.out.println("version:"+version+"  headerLength:"+headerLength+"  differentService:"+differentService+"  totalLength:"+totalLength);
         System.out.println("identification:"+identification+"  flag:"+flag+"  offset:"+offset);
         System.out.println("ttl:"+ttl+"  protocol:"+protocol+"  headerCheckSum:"+headerCheckSum);
@@ -124,6 +134,11 @@ public class InternetParser extends AbstractParser {
         System.out.println("macLength:"+macLength+"  ipLength:"+ipLength+"  operator:"+operator);
         System.out.println("senderMAC:"+senderMAC+"  senderIP:"+senderIP);
         System.out.println("targetMAC:"+targetMAC+"  targetIP:"+targetIP);
+
+        packet.setProtocol(ProtocolType.ARP);
+        if(opcode == 1) packet.setInfo("Who has "+targetIP+"? Tell "+senderIP);
+        else packet.setInfo(senderIP+" is at "+senderMAC);
+
         return new ParserResult(true,null,28);
     }
 }

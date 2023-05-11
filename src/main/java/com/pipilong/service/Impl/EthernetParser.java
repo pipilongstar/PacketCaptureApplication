@@ -24,6 +24,10 @@ public class EthernetParser extends AbstractParser {
         ProtocolType nextProtocol = ProtocolType.getProtocol(type);
         System.out.println("-----ethernet:");
         System.out.println("destination:"+destination+"  source:"+source+"  type:"+nextProtocol);
+        packet.setInfo(source+"--->"+destination);
+        packet.setProtocol(ProtocolType.ETHERNET);
+        packet.setSource(source);
+        packet.setDestination(destination);
         return new ParserResult(true,nextProtocol,14);
     }
 }

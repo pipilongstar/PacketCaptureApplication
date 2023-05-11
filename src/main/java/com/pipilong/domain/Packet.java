@@ -1,9 +1,7 @@
 package com.pipilong.domain;
-
 import com.pipilong.enums.ProtocolType;
 import lombok.Data;
 import org.springframework.stereotype.Component;
-
 import java.io.Serializable;
 
 /**
@@ -17,8 +15,8 @@ public class Packet implements Serializable {
 
     int id;
     String time;
-    String sourceIP;
-    String destinationIP;
+    String source;
+    String destination;
     ProtocolType protocol;
     int length;
     String info;

@@ -2,64 +2,191 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>实时数据展示</title>
+    <title>抓包软件</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.5.2/dist/sockjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <link rel="stylesheet" type="text/css" href="../static/index.css">
+    <link rel="stylesheet" th:href="@{index.css}">
     <!--    <script src="https://cdn.jsdelivr.net/npm/stompjs@7.3.0/dist/stomp.min.js"></script>-->
     <!--    <script src="https://cdn.jsdelivr.net/npm/stompjs@7.3.0/dist/stomp.min.js"></script>-->
 
     <script>
         $(document).ready(function (data) {
-            var socket = new WebSocket("ws://localhost:8080/data"); // WebSocket的URL，根据实际情况进行修改
+            let socket = new WebSocket("ws://localhost:8080/data"); // WebSocket的URL，根据实际情况进行修改
 
             socket.onmessage = function (event) {
                 const data = JSON.parse(event.data);
-                console.log(data);
                 // 处理接收到的数据，并更新页面
                 updateData(data);
             };
 
-            // $('form').submit(function(event) {
-            //     event.preventDefault(); // 阻止表单的默认提交行为
-            //
-            //     var name = $('#name').val();
-            //     var email = $('#email').val();
-            //
-            //     // 构造要发送的消息对象
-            //     const message = {
-            //         name: name,
-            //         email: email
-            //     };
-            //
-            //     // 使用 WebSocket 的 session 变量发送消息
-            //     socket.send(message);
-            // });
+            $("#data-table tbody").on("click", "tr", function () {
+                const id = $(this).find("td:first").text(); // 获取第一列的文本值作为id
+                showDetailedInformation(id); // 调用需要调用的函数并传递id值
+            });
 
         });
 
         function updateData(data) {
             // 根据接收到的数据更新页面上的内容
             // 例如，将数据添加到表格中
-            const row = "<tr><td>" + data.id + "</td><td>" + data.time + "</td><td>" + data.protocol + "</td><td>" + data.length + "</td></tr>";
+            const row = "<tr><td>" + data.id + "</td><td>" + data.time + "</td><td>" + data.source + "</td><td>" + data.destination + "</td><td>" + data.protocol + "</td><td>" + data.length + "</td><td>" + data.info + "</td></tr>";
             $("#data-table tbody").append(row);
         }
 
     </script>
     <script>
-        function sendAsyncMessage(event) {
-            // 使用axios发送异步POST请求
-            axios.post('/packetCapture/' + event.target.id).then(function (response) {
-                console.log(response.data); // 处理服务器响应
+        var mutix = true;
+
+        function showDetailedInformation(id) {
+            let content = "<h2>"+id+"</h2>";
+
+            const contentContainer = document.getElementById("detailInfo-container");
+            contentContainer.innerHTML = content;
+
+            openModal("detailInfo-modal1");
+        }
+
+        function openCapture() {
+            if (!mutix) return;
+            mutix = false;
+            let networkSelect = document.getElementById("networkSelect");
+            let netWordName = networkSelect.value;
+            if (netWordName === "") {
+                showErrorMessage("请先选择监听的网卡");
+                mutix = true;
+                return;
+            }
+            axios.post('/packetCapture/open', netWordName);
+        }
+
+        function closeCapture() {
+            if (mutix) return;
+            mutix = true;
+            axios.post('/packetCapture/close');
+        }
+
+        function clearTableAndSendRequest() {
+            // 获取表格的 tbody 元素
+            const tableBody = document.querySelector('#data-table tbody');
+
+            // 移除 tbody 中的所有子节点
+            while (tableBody.firstChild) {
+                tableBody.removeChild(tableBody.firstChild);
+            }
+
+            // 发送 DELETE 请求到后端
+            axios.delete('/dataProcessing/clearDataArray').then(function (response) {
+            }).catch(function (error) {
+            });
+        }
+
+        function toggleDropdown() {
+            var selectElement = document.querySelector('.custom-select select');
+            var customSelect = document.querySelector('.custom-select');
+            customSelect.classList.toggle('open');
+            selectElement.focus();
+        }
+
+        function networkChange() {
+            openModal("modal");
+        }
+
+        function openModal(event) {
+            const modal = document.getElementById(event);
+            modal.style.display = "block"; // 显示弹框
+        }
+
+        function closeModal(event) {
+            const modal = document.getElementById(event);
+            modal.style.display = "none"; // 隐藏弹框
+        }
+
+        //显示success类型的信息
+        function showSuccessMessage(event) {
+            const successMessage = document.getElementById("success-message");
+            successMessage.style.display = "block";
+            document.getElementById("success-message").innerHTML = event;
+            setTimeout(function () {
+                successMessage.style.display = "none";
+            }, 1000);
+        }
+
+        //显示error类型的信息
+        function showErrorMessage(event) {
+            const errorMessage = document.getElementById("error-message");
+            errorMessage.style.display = "block";
+            document.getElementById("error-message").innerHTML = event;
+            setTimeout(function () {
+                errorMessage.style.display = "none";
+            }, 1000);
+        }
+
+        //显示info类型的信息
+        function showInfoMessage(event) {
+            const errorMessage = document.getElementById("info-message");
+            errorMessage.style.display = "block";
+            document.getElementById("info-message").innerHTML = event;
+            setTimeout(function () {
+                errorMessage.style.display = "none";
+            }, 1000);
+        }
+
+        //保存数据
+        function save() {
+            downloadFile("保存成功", "保存失败");
+            clearTableAndSendRequest();
+            closeModal("modal");
+        }
+
+        function unSave() {
+            clearTableAndSendRequest();
+            closeModal('detailInfo-modal1');
+        }
+
+        //导出文件
+        function downloadFile(e1, e2) {
+            const tbody = document.querySelector('#data-table tbody');
+            if (tbody.children.length <= 0) {
+                showInfoMessage("没有捕获到任何数据包");
+                return;
+            }
+            axios({
+                url: '/dataProcessing/fileDownload',
+                method: 'GET',
+                responseType: 'blob',  // 响应数据类型为blob
             })
+                .then(function (response) {
+                    const url = window.URL.createObjectURL(new Blob([response.data]));
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.setAttribute('download', 'packet.pcap');  // 设置文件名
+                    document.body.appendChild(link);
+                    link.click();
+                    showSuccessMessage(e1);
+                })
                 .catch(function (error) {
-                    console.error(error); // 处理请求错误
+                    console.log(error);
+                    showErrorMessage(e2);
                 });
         }
+
     </script>
+
 </head>
 <body>
+<div id="success-message" class="success-message">
+    保存成功！
+</div>
+
+<div id="error-message" class="success-message">
+    操作失败！
+</div>
+
+<div id="info-message" class="success-message">
+    操作异常！
+</div>
+
 <header>
     <a href="https://github.com/pipilongstar" target="_blank">
         <img src="https://github.com/favicon.ico" alt="GitHub">
@@ -68,74 +195,77 @@
 </header>
 
 <div class="container">
-    <div class="form-style">
-        <form id="open" onsubmit="sendAsyncMessage(event); return false;">
-            <button type="submit" class="styled-button">开始捕获</button>
+    <div style="display: inline-block;">
+        <form id="open" onsubmit="openCapture(); return false;" style="display: inline-block;">
+            <button id="openButton" type="submit" class="styled-button">开始捕获</button>
         </form>
-        <form id="open1" onsubmit="sendAsyncMessage(event); return false;">
-            <button type="submit" class="styled-button">导出文件</button>
-        </form>
-    </div>
-    <div class="form-style">
-        <form id="close" onsubmit="sendAsyncMessage(event); return false;">
+        <form id="close" onsubmit="closeCapture(); return false;" style="display: inline-block;">
             <button type="submit" class="styled-button">停止捕获</button>
         </form>
-        <form id="close2" onsubmit="sendAsyncMessage(event); return false;">
-            <button type="submit" class="styled-button">设置过滤</button>
-        </form>
     </div>
 
-
+    <div style="display: flex;">
+        <div style="flex: 1">
+            <label class="custom-select">
+                <select id="networkSelect" class="custom-select" onclick="toggleDropdown()" onchange="networkChange()"
+                        style="display: inline-block;">
+                    <option value="">请选择监听网卡</option>
+                    <option th:each="dev : ${devs}" th:value="${dev.getName()}"
+                            th:text="${dev.getDescription()}"></option>
+                </select>
+            </label>
+        </div>
+        <div style="display: inline-block; flex: 1">
+            <form onsubmit="downloadFile('导出成功','导出失败'); return false;" style="display: inline-block;">
+                <button type="submit" class="styled-button">导出文件</button>
+            </form>
+            <form id="close2" style=" display: inline-block;">
+                <button type="submit" class="styled-button">设置过滤</button>
+            </form>
+        </div>
+        <div style="flex: 1">
+            <button onclick="clearTableAndSendRequest()" class="styled-button" style="display: inline-block;flex: 1">
+                清空列表
+            </button>
+        </div>
+    </div>
 </div>
 
-<table id="data-table">
-    <thead>
-    <tr>
-        <th>Id</th>
-        <th>Time</th>
-        <th>Protocol</th>
-        <th>Length</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr>
-        <td>0</td>
-        <td>2023-5-8 20:21:21.123211</td>
-        <td>TCP</td>
-        <td>31Byte</td>
-    </tr>
-    <tr>
-        <td>1</td>
-        <td>2023-5-8 20:21:21.143211</td>
-        <td>DNS</td>
-        <td>54Byte</td>
-    </tr>
-    <tr>
-        <td>1</td>
-        <td>2023-5-8 20:21:21.143211</td>
-        <td>DNS</td>
-        <td>54Byte</td>
-    </tr>
-    <tr>
-        <td>1</td>
-        <td>2023-5-8 20:21:21.143211</td>
-        <td>DNS</td>
-        <td>54Byte</td>
-    </tr>
-    <tr>
-        <td>1</td>
-        <td>2023-5-8 20:21:21.143211</td>
-        <td>DNS</td>
-        <td>54Byte</td>
-    </tr>
-    <tr>
-        <td>1</td>
-        <td>2023-5-8 20:21:21.143211</td>
-        <td>DNS</td>
-        <td>54Byte</td>
-    </tr>
-    <!-- 这里将动态添加数据行 -->
-    </tbody>
-</table>
+<div id="modal" class="modal">
+    <div class="modal-content">
+        <!-- 弹框内容 -->
+        <h3>您是否要保存已经捕获的分组，否则将会丢失</h3>
+        <div style="text-align: center;">
+            <button onclick="save()" class="save-button">保存</button>
+            <button onclick="closeModal('modal')" class="save-button">不保存</button>
+        </div>
+    </div>
+</div>
+
+<div id="detailInfo-modal1">
+    <div id="detailInfo-modal2">
+        <span id="close-detailInfo" onclick="unSave()">&times;</span>
+        <div id="detailInfo-container"></div>
+    </div>
+</div>
+
+<div style="max-height: 490px;overflow: auto;">
+    <table id="data-table">
+        <thead>
+        <tr>
+            <th>Id</th>
+            <th>Time</th>
+            <th>Source</th>
+            <th>Destination</th>
+            <th>Protocol</th>
+            <th>Length</th>
+            <th>Info</th>
+        </tr>
+        </thead>
+        <tbody>
+        <!-- 这里将动态添加数据行 -->
+        </tbody>
+    </table>
+</div>
 </body>
 </html>

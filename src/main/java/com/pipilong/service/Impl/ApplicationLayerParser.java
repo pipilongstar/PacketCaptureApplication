@@ -21,6 +21,8 @@ public class ApplicationLayerParser extends AbstractParser {
     private Pair<String,Integer> res;
     private final Map<Integer,String> dnsCache = new HashMap<>();
     private int startPosition;
+
+    private String info;
     @Override
     public ParserResult parser(byte[] data, ProtocolType protocol, int position) {
         System.out.println("-----ApplicationLayer:"+protocol);
@@ -41,13 +43,14 @@ public class ApplicationLayerParser extends AbstractParser {
     }
 
     public ParserResult dnsParser(byte[] data){
+        info="";
         //DNS协议解析
         //会话标识
         int transactionId = convertToInt(data,2);
         //标志
         int flags = convertToInt(data,2);
         int QR = (flags >>> 15) & 1;
-        int opcode = flags & 0x7800;
+        int opcode = (flags >>> 11) & 0xf;
         int AA = (flags >>> 10) & 1;
         int TC = (flags >>> 9) & 1;
         int RD = (flags >>> 8) & 1;
@@ -59,6 +62,16 @@ public class ApplicationLayerParser extends AbstractParser {
         int AuthorityRRs = convertToInt(data,2);
         int AdditionalRRs = convertToInt(data,2);
         String DNSDataType = QR == 0 ? "query" : "response";
+        if(opcode == 0){
+            info += "Standard query  ";
+        }else if(opcode == 1){
+            info += "Inverse query  ";
+        }else if(opcode == 2){
+            info += "Server Status query  ";
+        }
+        info += DNSDataType + "  ";
+        info += transactionId + "  ";
+
         System.out.println("("+DNSDataType+")");
         System.out.println("transactionId:0x"+Integer.toHexString(transactionId)+"  flags:0x"+Integer.toHexString(flags));
         System.out.println("Questions:"+Questions+"  AnswerRRs:"+AnswerRRs);
@@ -88,6 +101,10 @@ public class ApplicationLayerParser extends AbstractParser {
             dataLength += additionalRRs.getKey();
             dataLength += dnsRRAdditionalParser(data,additionalRRs.getValue());
         }
+
+        packet.setInfo(info);
+        packet.setProtocol(ProtocolType.DNS);
+
         return new ParserResult(true,null,12+dataLength);
     }
 
@@ -148,6 +165,8 @@ public class ApplicationLayerParser extends AbstractParser {
         //查询类型
         int typeId = convertToInt(data,2);
         DNSType type = DNSType.getDNSType(typeId);
+        info += type + "  ";
+        info += name + "  ";
         //查询类
         int queryClassId = convertToInt(data,2);
         String queryClass = queryClassId == 1 ? "IN" : null;

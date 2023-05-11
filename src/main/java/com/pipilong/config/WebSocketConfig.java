@@ -17,14 +17,11 @@ import javax.xml.crypto.Data;
  */
 @Configuration
 public class WebSocketConfig implements WebSocketConfigurer {
-
     private final DataHandler dataHandler;
-
     @Autowired
     public WebSocketConfig(DataHandler dataHandler){
         this.dataHandler=dataHandler;
     }
-
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         registry.addHandler(dataHandler,"/data").setAllowedOriginPatterns("*");

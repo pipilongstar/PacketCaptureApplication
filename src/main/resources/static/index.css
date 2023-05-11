@@ -1,5 +1,6 @@
 /* styles.css */
 
+
 /* 全局样式 */
 body {
     font-family: Arial, sans-serif;
@@ -24,17 +25,17 @@ header {
 .container {
     margin: 20px auto;
     text-align: center;
-    max-width: 800px;
+    width: 100%;
 }
 
 /* 按钮样式 */
-button {
-    border: none;
-    padding: 12px 20px;
-    font-size: 16px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-}
+/*button {*/
+/*    border: none;*/
+/*    padding: 12px 20px;*/
+/*    font-size: 16px;*/
+/*    cursor: pointer;*/
+/*    transition: background-color 0.3s ease;*/
+/*}*/
 
 .styled-button {
     display: inline-block;
@@ -50,8 +51,13 @@ button {
     transition: background-color 0.3s ease;
 }
 
+button:disabled {
+    cursor: default;
+}
+
 .styled-button:hover {
     background-color: #554d5b;
+    cursor: pointer;
 }
 
 .styled-button:active {
@@ -108,13 +114,13 @@ h1 {
     color: #3a3a3a;
 }
 
+.right-button {
+    margin-left: auto;
+}
+
 /* 表单样式 */
 form {
     margin-bottom: 20px;
-}
-
-.form-style{
-    display: inline-block;
 }
 
 form button {
@@ -147,4 +153,208 @@ a:hover {
     h1 {
         font-size: 20px;
     }
+}
+
+/* 自定义下拉框样式 */
+.custom-select {
+    position: relative;
+    display: inline-block;
+}
+
+.custom-select select {
+    display: inline-block;
+    padding: 8px 16px;
+    border: none; /* 去掉边框 */
+    border-radius: 8px; /* 添加圆角 */
+    background-color: #595568;
+    font-size: 16px;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    color: #ececec;
+}
+
+.custom-select select:focus {
+    outline: none;
+}
+
+.custom-select select::placeholder {
+    color: #ececec;
+}
+
+/* 自定义下拉框箭头 */
+.custom-select::after {
+    content: '\25B2';
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    transform: translateY(-50%);
+    color: #ececec;
+    transition: transform 0.3s;
+}
+
+.custom-select.open::after {
+    content: '\25BC';
+    transform: translateY(-50%) rotate(180deg);
+}
+
+/* 弹框样式 */
+.modal {
+    display: none; /* 默认隐藏弹框 */
+    position: fixed;
+    z-index: 9999;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* 半透明背景 */
+}
+
+.modal-content {
+    background-color: #f9f9f9; /* 奶白色背景 */
+    margin: 20% auto; /* 调整弹框位置 */
+    padding: 20px;
+    width: 80%;
+    max-width: 400px;
+    border-radius: 10px; /* 圆角 */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); /* 阴影效果 */
+    border: none; /* 无边框 */
+}
+
+.save-button {
+    background-color: #ccc;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.save-button:hover {
+    background-color: #888;
+}
+
+.success-message {
+    display: none; /* 初始状态隐藏 */
+    position: fixed;
+    width: 14%;
+    height: 2%;
+    padding: 20px;
+    background-color: #59bc5c; /* 成功消息的背景颜色 */
+    color:  #f9f9f9;
+    text-align: center;
+    font-size: 16px;
+    z-index: 9999;
+    border-radius: 10px;
+    left: 50%; /* 将消息的左边缘定位到页面水平中心 */
+    transform: translate(-50%, -50%); /* 使用translate进行居中偏移 */
+    /*animation: slideDown 0.5s forwards; !* 应用动画效果，并保持最后状态 *!*/
+    animation: fadeInOut 4s forwards; /* 应用动画效果，并保持最后状态 */
+}
+
+.error-message {
+    display: none; /* 初始状态隐藏 */
+    position: fixed;
+    width: 14%;
+    height: 2%;
+    padding: 20px;
+    background-color: #e66363; /* 成功消息的背景颜色 */
+    color:  #f9f9f9;
+    text-align: center;
+    font-size: 16px;
+    z-index: 9999;
+    border-radius: 10px;
+    left: 50%; /* 将消息的左边缘定位到页面水平中心 */
+    transform: translate(-50%, -50%); /* 使用translate进行居中偏移 */
+    /*animation: slideDown 0.5s forwards; !* 应用动画效果，并保持最后状态 *!*/
+    animation: fadeInOut 4s forwards; /* 应用动画效果，并保持最后状态 */
+}
+
+@keyframes fadeInOut {
+    0% {
+        opacity: 1; /* 完全可见 */
+    }
+    20% {
+        opacity: 0.8;
+    }
+    40% {
+        opacity: 0.6;
+    }
+    60% {
+        opacity: 0.4;
+    }
+    80% {
+        opacity: 0.2;
+    }
+    100% {
+        opacity: 0; /* 完全消失 */
+        display: none; /* 隐藏元素 */
+    }
+}
+
+/* 设置滚动条的宽度和颜色 */
+::-webkit-scrollbar {
+    width: 15px;
+    height: 10px;
+    background-color: #f5f5f5;
+}
+
+/* 设置滚动条的轨道颜色 */
+::-webkit-scrollbar-track {
+    background-color: #f5f5f5;
+}
+
+/* 设置滚动条的滑块颜色 */
+::-webkit-scrollbar-thumb {
+    background-color: #ccc;
+    border-radius: 5px;
+}
+
+/* 设置滚动条的滑块悬停时的颜色 */
+::-webkit-scrollbar-thumb:hover {
+    background-color: #999;
+}
+
+#detailInfo-modal1 {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.4);
+}
+
+#detailInfo-modal2 {
+    position: absolute;
+    background-color: #fefefe;
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 40%;
+    left: 30%;
+    top: -20%;
+    /*transform: translate(-50%, -50%);*/
+    border-radius: 14px;
+    box-shadow: 0 0 10px rgba(132, 132, 132, 0.5);
+}
+
+#close-detailInfo {
+    position: absolute;
+    top: -30px;
+    right: -30px;
+    font-size: 40px;
+    cursor: pointer;
+    font-weight: bold;
+    color: #131313;
+}
+
+#close-detailInfo:hover,
+#close-detailInfo:focus{
+    color: #f3f3f3;
+    text-decoration: none;
+    cursor: pointer;
 }

@@ -47,9 +47,10 @@ public class DataPacketListener implements Listener {
         System.arraycopy(packetData,0,data,packetHeader.length,packetData.length);
 
         Packet packet = rawPacketParser.parser(data,id);
+        log.info(packet.toString());
         String message = JSON.toJSONString(packet);
         try {
-            DataHandler.sentData(new TextMessage(message,false));
+            DataHandler.sentData(new TextMessage(message));
         } catch (Exception e) {
             log.error(e.getMessage());
         }

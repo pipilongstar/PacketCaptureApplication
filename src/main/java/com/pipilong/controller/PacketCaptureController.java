@@ -1,40 +1,31 @@
 package com.pipilong.controller;
 
-import com.alibaba.fastjson.JSON;
-import com.pipilong.domain.Packet;
-import com.pipilong.handler.DataHandler;
 import com.pipilong.service.Impl.RawPacketCapturer;
+import lombok.extern.slf4j.Slf4j;
 import org.pcap4j.core.NotOpenException;
 import org.pcap4j.core.PcapNativeException;
 import org.pcap4j.core.PcapNetworkInterface;
 import org.pcap4j.core.Pcaps;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.socket.TextMessage;
+import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 
 /**
  * @author pipilong
  * @createTime 2023/5/9
  * @description
  */
-@Controller
+@Slf4j
+@RestController
 @RequestMapping("/packetCapture")
 public class PacketCaptureController {
 
     private final RawPacketCapturer rawPacketCapturer;
 
-    private final PcapNetworkInterface networkInterface = Pcaps.getDevByName("\\Device\\NPF_{E924369A-8854-40C6-AD69-85ECD2F962B4}");
-
-    @Autowired
-    private Packet packet;
-
-    @Autowired
-    private DataHandler dataHandler;
+    private static Thread currentThread;
 
     @Autowired
     public PacketCaptureController(RawPacketCapturer rawPacketCapturer) throws PcapNativeException {
@@ -42,22 +33,24 @@ public class PacketCaptureController {
     }
 
     @PostMapping("/open")
-    @ResponseBody
-    public void open() throws Exception {
-        new Thread(()->{
+    public void open(@RequestBody String network) throws PcapNativeException, UnsupportedEncodingException {
+        String decode = URLDecoder.decode(network, "utf-8");
+        decode = decode.substring(0,decode.length()-1);
+        PcapNetworkInterface dev = Pcaps.getDevByName(decode);
+        log.info(decode);
+        currentThread = new Thread(() -> {
             try {
-                rawPacketCapturer.start(networkInterface);
+                rawPacketCapturer.start(dev);
             } catch (PcapNativeException | NotOpenException | InterruptedException e) {
                 throw new RuntimeException(e);
             }
-        }).start();
+        });
+        currentThread.start();
     }
 
     @PostMapping("/close")
-    @ResponseBody
     public void close(){
-        rawPacketCapturer.close();
+        currentThread.stop();
     }
-
 
 }

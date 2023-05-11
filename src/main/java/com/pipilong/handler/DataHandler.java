@@ -42,7 +42,6 @@ public class DataHandler implements WebSocketHandler {
     }
 
     public static void sentData(WebSocketMessage<?> data) throws Exception {
-        log.info(data.getPayload()+currentSession.getId());
         currentSession.sendMessage(data);
     }
 

@@ -59,17 +59,14 @@ public class RawPacketParser extends AbstractParser {
         ParserResult ethernetResult = ethernetParser.parser(data, ProtocolType.ETHERNET, pointer);
         pointer += ethernetResult.getDataLength();
 
-        if(ethernetResult.getNextProtocol() != null) packet.setProtocol(ethernetResult.getNextProtocol());
         //解析数据部分的网络层
         ParserResult internetResult = internetParser.parser(data, ethernetResult.getNextProtocol(), pointer);
         pointer += internetResult.getDataLength();
 
-        if(internetResult.getNextProtocol() != null) packet.setProtocol(internetResult.getNextProtocol());
         //解析数据部分的传输层
         ParserResult transportResult = transportParser.parser(data, internetResult.getNextProtocol(), pointer);
         pointer += transportResult.getDataLength();
 
-        if(transportResult.getNextProtocol() != null) packet.setProtocol(transportResult.getNextProtocol());
         //解析数据部分的应用层
         ParserResult applicationLayerResult = applicationLayerParser.parser(data, transportResult.getNextProtocol(), pointer);
         pointer += applicationLayerResult.getDataLength();

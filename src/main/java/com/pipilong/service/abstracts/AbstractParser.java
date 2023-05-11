@@ -1,8 +1,11 @@
 package com.pipilong.service.abstracts;
 
+import com.pipilong.domain.Packet;
 import com.pipilong.domain.ParserResult;
 import com.pipilong.enums.ProtocolType;
 import com.pipilong.service.Parser;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.AutoConfigureOrder;
 import org.springframework.stereotype.Service;
 
 /**
@@ -14,6 +17,8 @@ import org.springframework.stereotype.Service;
 public class AbstractParser implements Parser {
     protected int pointer =0;
 
+    @Autowired
+    protected Packet packet;
     protected StringBuffer builder = new StringBuffer();
     @Override
     public ParserResult parser(byte[] data, ProtocolType protocol, int position){return null;}
