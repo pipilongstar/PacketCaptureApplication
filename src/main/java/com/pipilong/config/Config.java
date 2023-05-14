@@ -3,6 +3,7 @@ package com.pipilong.config;
 import com.esotericsoftware.kryo.Kryo;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.ClassPathResource;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -19,14 +20,17 @@ import java.nio.channels.FileChannel;
 public class Config {
 
     /**
-     * mmap内存映射
-     * @return 内存映射
+     * 文件通道，用来创建内存映射的。
+     * @return 文件通道
      * @throws IOException 文件读取异常
      */
     @Bean
-    public MappedByteBuffer getMmap() throws IOException {
-        FileChannel fileChannel = new RandomAccessFile("classpath:static/packet.data", "rw").getChannel();
-        return fileChannel.map(FileChannel.MapMode.READ_WRITE,0,fileChannel.size());
+    public FileChannel getMmap() throws IOException {
+        FileChannel fileChannel = new RandomAccessFile(new ClassPathResource("static/packet.data").getFile(), "rw").getChannel();
+        fileChannel.position(0);
+        fileChannel.force(true);
+        fileChannel.truncate(0);
+        return fileChannel;
     }
 
 

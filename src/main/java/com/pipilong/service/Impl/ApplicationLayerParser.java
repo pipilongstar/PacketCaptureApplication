@@ -1,12 +1,12 @@
 package com.pipilong.service.Impl;
 
 import com.pipilong.domain.ParserResult;
+import com.pipilong.domain.packet.DNSPacket;
 import com.pipilong.enums.DNSType;
 import com.pipilong.enums.ProtocolType;
 import com.pipilong.service.abstracts.AbstractParser;
-import javafx.util.Pair;
+import com.pipilong.util.Pair;
 import org.springframework.stereotype.Service;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -21,7 +21,7 @@ public class ApplicationLayerParser extends AbstractParser {
     private Pair<String,Integer> res;
     private final Map<Integer,String> dnsCache = new HashMap<>();
     private int startPosition;
-
+    private DNSPacket dnsPacket;
     private String info;
     @Override
     public ParserResult parser(byte[] data, ProtocolType protocol, int position) {
@@ -35,10 +35,12 @@ public class ApplicationLayerParser extends AbstractParser {
             return dnsParser(data);
         }
 
+        packetData.setApplication(null);
         return new ParserResult(true,null,0);
     }
 
     public ParserResult httpParser(byte[] data){
+        packetData.setApplication(null);
         return new ParserResult(true,null,0);
     }
 
@@ -76,34 +78,53 @@ public class ApplicationLayerParser extends AbstractParser {
         System.out.println("transactionId:0x"+Integer.toHexString(transactionId)+"  flags:0x"+Integer.toHexString(flags));
         System.out.println("Questions:"+Questions+"  AnswerRRs:"+AnswerRRs);
         System.out.println("AuthorityRRs:"+AuthorityRRs+"  AdditionalRRs:"+AdditionalRRs);
+
+        dnsPacket = new DNSPacket();
+        dnsPacket.setTransactionId("0x"+Integer.toHexString(transactionId));
+        dnsPacket.setFlags("0x"+Integer.toHexString(flags));
+        dnsPacket.getFlagsMap().put("QR", QR);
+        dnsPacket.getFlagsMap().put("AA", AA);
+        dnsPacket.getFlagsMap().put("TC", TC);
+        dnsPacket.getFlagsMap().put("RD", RD);
+        dnsPacket.getFlagsMap().put("RA", RA);
+        dnsPacket.getFlagsMap().put("opcode", opcode);
+        dnsPacket.getFlagsMap().put("rCode", rCode);
+        dnsPacket.setDNSDataType(DNSDataType);
+        dnsPacket.setQuestions(Questions);
+        dnsPacket.setAnswerRRs(AnswerRRs);
+        dnsPacket.setAdditionalRRs(AdditionalRRs);
+        dnsPacket.setAuthorityRRs(AuthorityRRs);
+
         int dataLength = 0;
         //解析Questions
         for(int i=1;i<=Questions;i++) {
-            Pair<Integer, DNSType> questions = dnsRRParser(data, "Questions", i);
+            Pair<Integer, DNSType> questions = dnsRRParser(data, "Questions", i,false);
             dataLength += questions.getKey();
         }
         //解析资源记录RR区域
         //AnswerRRs
         for(int i=1;i<=AnswerRRs;i++) {
-            Pair<Integer, DNSType> answerRRs = dnsRRParser(data, "AnswerRRs", i);
+            Pair<Integer, DNSType> answerRRs = dnsRRParser(data, "AnswerRRs", i,true);
             dataLength += answerRRs.getKey();
             dataLength += dnsRRAdditionalParser(data,answerRRs.getValue());
         }
         //AuthorityRRs
         for(int i=1;i<=AuthorityRRs;i++) {
-            Pair<Integer, DNSType> authorityRRs = dnsRRParser(data, "AuthorityRRs", i);
+            Pair<Integer, DNSType> authorityRRs = dnsRRParser(data, "AuthorityRRs", i,true);
             dataLength += authorityRRs.getKey();
             dataLength += dnsRRAdditionalParser(data,authorityRRs.getValue());
         }
         //AdditionalRRs
         for(int i=1;i<=AdditionalRRs;i++) {
-            Pair<Integer, DNSType> additionalRRs = dnsRRParser(data, "AdditionalRRs", i);
+            Pair<Integer, DNSType> additionalRRs = dnsRRParser(data, "AdditionalRRs", i,true);
             dataLength += additionalRRs.getKey();
             dataLength += dnsRRAdditionalParser(data,additionalRRs.getValue());
         }
 
         packet.setInfo(info);
         packet.setProtocol(ProtocolType.DNS);
+
+        packetData.setApplication(new Pair<>(dnsPacket,ProtocolType.DNS));
 
         return new ParserResult(true,null,12+dataLength);
     }
@@ -136,7 +157,7 @@ public class ApplicationLayerParser extends AbstractParser {
         return new Pair<>(name,totalLength);
     }
 
-    private Pair<Integer,DNSType> dnsRRParser(byte[] data,String RRType,int id){
+    private Pair<Integer,DNSType> dnsRRParser(byte[] data,String RRType,int id,boolean isRR){
         int totalLength = 0;
         //判断是否为压缩表示法
         byte isCompress = data[pointer];
@@ -172,6 +193,8 @@ public class ApplicationLayerParser extends AbstractParser {
         String queryClass = queryClassId == 1 ? "IN" : null;
         System.out.println("["+RRType+id+"]:");
         System.out.println("name:"+name+"  type:"+type+"  Class:"+queryClass);
+        if(!isRR) dnsPacket.getQueriesList().add(new DNSPacket.Queries(name,type,queryClass));
+        else dnsPacket.getRrList().add(new DNSPacket.RR(name,type,queryClass));
         totalLength+=4;
 
         return new Pair<>(totalLength,type);
@@ -212,6 +235,13 @@ public class ApplicationLayerParser extends AbstractParser {
         }
         System.out.println("ttl:"+ttl+"  dataLength:"+dataLength);
         System.out.println(type+":"+dataInfo);
+
+        int size = dnsPacket.getRrList().size();
+        DNSPacket.RR rr = dnsPacket.getRrList().get(size);
+        rr.setTtl(ttl);
+        rr.setDataLength(dataLength);
+        rr.setType(type);
+
         return 6+dataLength;
     }
 

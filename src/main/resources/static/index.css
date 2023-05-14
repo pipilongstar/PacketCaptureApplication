@@ -268,7 +268,7 @@ a:hover {
     left: 50%; /* 将消息的左边缘定位到页面水平中心 */
     transform: translate(-50%, -50%); /* 使用translate进行居中偏移 */
     /*animation: slideDown 0.5s forwards; !* 应用动画效果，并保持最后状态 *!*/
-    animation: fadeInOut 4s forwards; /* 应用动画效果，并保持最后状态 */
+    animation: fadeInOut 5s forwards; /* 应用动画效果，并保持最后状态 */
 }
 
 @keyframes fadeInOut {
@@ -358,3 +358,36 @@ a:hover {
     text-decoration: none;
     cursor: pointer;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

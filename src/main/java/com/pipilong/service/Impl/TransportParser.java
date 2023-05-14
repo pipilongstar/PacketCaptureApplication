@@ -1,8 +1,10 @@
 package com.pipilong.service.Impl;
 
 import com.pipilong.domain.ParserResult;
+import com.pipilong.domain.packet.UDPPacket;
 import com.pipilong.enums.ProtocolType;
 import com.pipilong.service.abstracts.AbstractParser;
+import com.pipilong.util.Pair;
 import org.springframework.stereotype.Service;
 
 /**
@@ -22,6 +24,8 @@ public class TransportParser extends AbstractParser {
         }else if(protocol == ProtocolType.TCP){
             return tcpParser(data);
         }
+
+        packetData.setATransport(null);
         return new ParserResult(true,null,0);
     }
 
@@ -39,10 +43,22 @@ public class TransportParser extends AbstractParser {
         String checkSum = "0x" + dataParser(data,2,"",true);
         System.out.println("sourcePort:"+sourcePort+"  destinationPort:"+destinationPort);
         System.out.println("length:"+length+"  checkSum:"+checkSum);
+
+        packet.setProtocol(ProtocolType.UDP);
+        packet.setInfo(sourcePort+" --> "+destinationPort+"  "+length+"  "+checkSum);
+
+        UDPPacket udpPacket = new UDPPacket();
+        udpPacket.setLength(length);
+        udpPacket.setCheckSum(checkSum);
+        udpPacket.setDestinationPort(destinationPort);
+        udpPacket.setSourcePort(sourcePort);
+        packetData.setATransport(new Pair<>(udpPacket,ProtocolType.UDP));
+
         return new ParserResult(true,protocolType,8);
     }
 
     private ParserResult tcpParser(byte[] data){
+        packetData.setATransport(null);
         return new ParserResult(true,null,0);
     }
 }

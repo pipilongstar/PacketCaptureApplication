@@ -1,6 +1,7 @@
 package com.pipilong.service.abstracts;
 
 import com.pipilong.domain.Packet;
+import com.pipilong.domain.PacketData;
 import com.pipilong.domain.ParserResult;
 import com.pipilong.enums.ProtocolType;
 import com.pipilong.service.Parser;
@@ -16,6 +17,9 @@ import org.springframework.stereotype.Service;
 @Service
 public class AbstractParser implements Parser {
     protected int pointer =0;
+
+    @Autowired
+    protected PacketData packetData;
 
     @Autowired
     protected Packet packet;

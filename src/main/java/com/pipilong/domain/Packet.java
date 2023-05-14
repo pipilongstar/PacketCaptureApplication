@@ -11,7 +11,7 @@ import java.io.Serializable;
  */
 @Component
 @Data
-public class Packet implements Serializable {
+public class Packet implements Serializable ,Cloneable{
 
     int id;
     String time;
@@ -20,5 +20,10 @@ public class Packet implements Serializable {
     ProtocolType protocol;
     int length;
     String info;
+
+    @Override
+    public Packet clone() throws CloneNotSupportedException {
+        return (Packet) super.clone();
+    }
 
 }

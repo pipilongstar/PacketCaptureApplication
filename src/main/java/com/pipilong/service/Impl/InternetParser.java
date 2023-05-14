@@ -1,8 +1,12 @@
 package com.pipilong.service.Impl;
 
 import com.pipilong.domain.ParserResult;
+import com.pipilong.domain.packet.ARPPacket;
+import com.pipilong.domain.packet.IPv4Packet;
+import com.pipilong.domain.packet.IPv6Packet;
 import com.pipilong.enums.ProtocolType;
 import com.pipilong.service.abstracts.AbstractParser;
+import com.pipilong.util.Pair;
 import org.springframework.stereotype.Service;
 
 /**
@@ -23,6 +27,8 @@ public class InternetParser extends AbstractParser {
         }else if(protocol == ProtocolType.IPv6){
             return ipv6Parser(data);
         }
+
+        packetData.setInternet(null);
         return new ParserResult(true,null,0);
     }
 
@@ -56,10 +62,23 @@ public class InternetParser extends AbstractParser {
         System.out.println("payLoadLength:"+payLoadLength+"  nextHeader:"+protocolType+"  hopLimit:"+hopLimit);
         System.out.println("sourceAddress:"+sourceAddress);
         System.out.println("destinationAddress:"+destinationAddress);
+
         packet.setSource(sourceAddress);
         packet.setDestination(destinationAddress);
         packet.setProtocol(ProtocolType.IPv6);
         packet.setInfo("payloadLength:"+payLoadLength+"  nextHeader:"+protocolType+"  hopLimit:"+hopLimit);
+
+        IPv6Packet iPv6Packet = new IPv6Packet();
+        iPv6Packet.setVersion(version);
+        iPv6Packet.setFlowLabel("0x"+Integer.toHexString(flowLabel));
+        iPv6Packet.setHopLimit(hopLimit);
+        iPv6Packet.setNextHeader(protocolType);
+        iPv6Packet.setDestinationAddress(destinationAddress);
+        iPv6Packet.setSourceAddress(sourceAddress);
+        iPv6Packet.setTrafficClass("0x"+Integer.toHexString(trafficClass));
+        iPv6Packet.setPayLoadLength(payLoadLength);
+        packetData.setInternet(new Pair<>(iPv6Packet,ProtocolType.IPv6));
+
         return new ParserResult(true,protocolType,40);
     }
 
@@ -103,6 +122,21 @@ public class InternetParser extends AbstractParser {
         System.out.println("sourceAddress:"+sourceAddress);
         System.out.println("destinationAddress:"+destinationAddress);
 
+        IPv4Packet iPv4Packet = new IPv4Packet();
+        iPv4Packet.setFlag(flag);
+        iPv4Packet.setIdentification("0x"+Integer.toHexString(identification));
+        iPv4Packet.setOffset(offset);
+        iPv4Packet.setTtl(ttl);
+        iPv4Packet.setVersion(version);
+        iPv4Packet.setDestinationAddress(destinationAddress);
+        iPv4Packet.setDifferentService("0x"+Integer.toHexString(differentService));
+        iPv4Packet.setSourceAddress(sourceAddress);
+        iPv4Packet.setHeaderLength(headerLength);
+        iPv4Packet.setTotalLength(totalLength);
+        iPv4Packet.setHeaderCheckSum("0x"+headerCheckSum);
+        iPv4Packet.setProtocol(protocol);
+        packetData.setInternet(new Pair<>(iPv4Packet, ProtocolType.IPv4));
+
         return new ParserResult(true,protocol,headerLength * 4);
     }
 
@@ -134,6 +168,18 @@ public class InternetParser extends AbstractParser {
         System.out.println("macLength:"+macLength+"  ipLength:"+ipLength+"  operator:"+operator);
         System.out.println("senderMAC:"+senderMAC+"  senderIP:"+senderIP);
         System.out.println("targetMAC:"+targetMAC+"  targetIP:"+targetIP);
+
+        ARPPacket arpPacket = new ARPPacket();
+        arpPacket.setOperator(operator);
+        arpPacket.setIpLength(ipLength);
+        arpPacket.setHardWare(hardWareProtocol);
+        arpPacket.setSenderIP(senderIP);
+        arpPacket.setMacLength(macLength);
+        arpPacket.setSenderMAC(senderMAC);
+        arpPacket.setTargetIP(targetIP);
+        arpPacket.setTargetMAC(targetMAC);
+        arpPacket.setProtocol(protocol);
+        packetData.setInternet(new Pair<>(arpPacket,ProtocolType.ARP));
 
         packet.setProtocol(ProtocolType.ARP);
         if(opcode == 1) packet.setInfo("Who has "+targetIP+"? Tell "+senderIP);

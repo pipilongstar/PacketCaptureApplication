@@ -41,7 +41,7 @@ public class DataPacketListener implements Listener {
     }
 
     @Override
-    public void parse(byte[] packetHeader, byte[] packetData, int id) {
+    public void parse(byte[] packetHeader, byte[] packetData, int id) throws IOException {
         byte[] data = new byte[packetHeader.length+packetData.length];
         System.arraycopy(packetHeader,0,data,0,packetHeader.length);
         System.arraycopy(packetData,0,data,packetHeader.length,packetData.length);

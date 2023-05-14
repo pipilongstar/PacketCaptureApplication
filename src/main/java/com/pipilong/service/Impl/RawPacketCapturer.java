@@ -1,11 +1,15 @@
 package com.pipilong.service.Impl;
 
+import com.pipilong.domain.Frame;
+import com.pipilong.domain.PacketData;
 import com.pipilong.exception.DataLengthOverException;
 import com.pipilong.listener.Listener;
 import lombok.extern.slf4j.Slf4j;
 import org.pcap4j.core.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -36,6 +40,12 @@ public class RawPacketCapturer {
             new ArrayBlockingQueue<>(10000));
     private int id = 1;
     private int pointer = 0;
+
+    @Autowired
+    private RawPacketParser rawPacketParser;
+
+    @Autowired
+    private PacketData packetData;
     @Autowired
     public RawPacketCapturer(Listener dataPacketListener) {
         this.dataPacketListener = dataPacketListener;
@@ -82,8 +92,20 @@ public class RawPacketCapturer {
             for (int i = 0; i < 4; i++) {
                 packetHeader[position--] = (byte) ((Len >> (24 - i * 8)) & 0xff);
             }
+
+            Frame frame = new Frame();
+            frame.setFrameLength(capLen);
+            frame.setFrameId(id);
+            frame.setInterfaceName(network.getName());
+            frame.setInterfaceDescription(network.getDescription());
+            this.packetData.setFrame(frame);
+
             //解析数据
-            dataPacketListener.parse(packetHeader, packetData, id++);
+            try {
+                dataPacketListener.parse(packetHeader, packetData, id++);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
 
             if(pointer+packetData.length+packetHeader.length <= TOTAL_LENGTH){
                 for(byte b : packetHeader){
@@ -135,7 +157,7 @@ public class RawPacketCapturer {
         return res;
     }
 
-    public void clearDataArray(){
+    public void clearDataArray() {
         initDataArray();
     }
 

@@ -14,7 +14,6 @@ public class ParserResult {
     boolean isSuccessful;
     ProtocolType nextProtocol;
     int dataLength;
-
     public ParserResult(){}
     public ParserResult(boolean isSuccessful, ProtocolType nextProtocol, int dataLength) {
         this.isSuccessful = isSuccessful;
@@ -22,3 +21,38 @@ public class ParserResult {
         this.dataLength = dataLength;
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

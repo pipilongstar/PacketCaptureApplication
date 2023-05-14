@@ -7,8 +7,57 @@
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.5.2/dist/sockjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <link rel="stylesheet" th:href="@{index.css}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css">
     <!--    <script src="https://cdn.jsdelivr.net/npm/stompjs@7.3.0/dist/stomp.min.js"></script>-->
     <!--    <script src="https://cdn.jsdelivr.net/npm/stompjs@7.3.0/dist/stomp.min.js"></script>-->
+
+    <style>
+        .input-container {
+            position: relative;
+            display: inline-block;
+            align-items: center;
+            width: 300px;
+        }
+
+        .input-container input {
+            flex: 1;
+            height: 26px;
+            width: 300px;
+            padding: 10px;
+            border: none;
+            border-radius: 20px;
+            background-color: #f1f1f1;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            font-size: 16px;
+            color: #333;
+        }
+
+        .input-container input:focus {
+            outline: none;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            background-color: #b9b9b9;
+        }
+
+        .input-container button {
+            position: absolute;
+            margin-left: 10px;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 20px;
+            background-color: #f1f1f1;
+            color: #000000;
+            font-size: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            right: 80px;
+            top: 24px;
+            transform: translateY(-50%);
+        }
+
+        .input-container button:hover {
+            background-color: #b9b9b9;
+        }
+    </style>
 
     <script>
         $(document).ready(function (data) {
@@ -25,7 +74,24 @@
                 showDetailedInformation(id); // 调用需要调用的函数并传递id值
             });
 
+            clearTableAndSendRequest();
         });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // 在这里放置需要在DOM加载完成后执行的代码
+            document.getElementById('uploadFile').addEventListener('change', function(event) {
+                const file = event.target.files[0];
+                console.info(file);
+                if (file) {
+                    uploadFile(file); // 调用上传文件的方法
+                }
+            });
+
+        });
+
+        function uploadButton(){
+            document.getElementById('uploadFile').click();
+        }
 
         function updateData(data) {
             // 根据接收到的数据更新页面上的内容
@@ -36,19 +102,64 @@
 
     </script>
     <script>
+        var openFile = false;
         var mutix = true;
 
         function showDetailedInformation(id) {
-            let content = "<h2>"+id+"</h2>";
+            let content = "";
 
             const contentContainer = document.getElementById("detailInfo-container");
-            contentContainer.innerHTML = content;
 
-            openModal("detailInfo-modal1");
+            axios.get('/dataProcessing/dataDetail/'+id).then(res =>{
+                openModal("detailInfo-modal1");
+                console.log(res.data);
+                content += "<h3>"+ "Frame" +"</h3>";
+                content += "<div style='line-height: 1;'>" + iterateObject(res.data.frame,2) + "</div>";
+
+                if(res.data.ethernet && res.data.ethernet.value && res.data.ethernet.key){
+                    content += "<h3>"+  "Ethernet:" + res.data.ethernet.value + "</h3>";
+                    content += "<div style='line-height: 1;'>" + iterateObject(res.data.ethernet.key,2) + "</div>";
+                }
+                if(res.data.internet && res.data.internet.value && res.data.internet.key){
+                    content += "<h3>"+  "Internet:" + res.data.internet.value + "</h3>";
+                    content += "<div style='line-height: 1;'>" + iterateObject(res.data.internet.key,2) + "</div>";
+                }
+                if(res.data.atransport && res.data.atransport.value && res.data.atransport){
+                    content += "<h3>"+  "Transport:" + res.data.atransport.value + "</h3>";
+                    content += "<div style='line-height: 1;'>" + iterateObject(res.data.atransport.key,2) + "</div>";
+                }
+                if(res.data.application && res.data.application.value && res.data.application){
+                    content += "<h3>"+  "Application:" + res.data.application.value + "</h3>";
+                    content += "<div style='line-height: 1;'>" + iterateObject(res.data.application.key,2) + "</div>";
+                }
+
+                contentContainer.innerHTML = content;
+            }).catch(error => {
+                console.info(error);
+                showErrorMessage("数据获取失败");
+            });
+
+        }
+
+        function iterateObject(obj,offset){
+            let content = "";
+            for (let cur in obj){
+                if(obj.hasOwnProperty(cur)){
+                    if(typeof obj[cur] === 'object' && obj[cur] !== null){
+                        content += "<p style='margin-left: "+offset+"em;'>"+"<strong>"+cur+" :"+"</strong>"+"</p>";
+                        content += iterateObject(obj[cur],offset+2);
+                    }else content += "<p style='margin-left: "+offset+"em;'>"+"<strong>"+cur+" :"+"</strong>"+obj[cur]+"</p>";
+                }
+            }
+            return content;
         }
 
         function openCapture() {
             if (!mutix) return;
+            if(openFile){
+                clearTableAndSendRequest();
+                uploadFile=false;
+            }
             mutix = false;
             let networkSelect = document.getElementById("networkSelect");
             let netWordName = networkSelect.value;
@@ -79,6 +190,8 @@
             axios.delete('/dataProcessing/clearDataArray').then(function (response) {
             }).catch(function (error) {
             });
+
+            mutix = true;
         }
 
         function toggleDropdown() {
@@ -141,7 +254,7 @@
 
         function unSave() {
             clearTableAndSendRequest();
-            closeModal('detailInfo-modal1');
+            closeModal('modal');
         }
 
         //导出文件
@@ -171,6 +284,34 @@
                 });
         }
 
+        function uploadFile(file) {
+            if(!file.name.endsWith(".pcap")){
+                showErrorMessage("上传的文件不是*.pcap文件");
+                return ;
+            }
+            const formData = new FormData();
+            formData.append('file', file);
+            console.info(file);
+            axios.post('/uploadFile', formData).then(function(res) {
+                //先清理数据
+                // clearTableAndSendRequest();
+                // 文件上传成功的处理逻辑
+                const dataList = res.data;
+                let rows='';
+                dataList.forEach(data => {
+                    const row = "<tr><td>" + data.id + "</td><td>" + data.time + "</td><td>" + data.source + "</td><td>" + data.destination + "</td><td>" + data.protocol + "</td><td>" + data.length + "</td><td>" + data.info + "</td></tr>";
+                    rows += row;
+                });
+                const tableBody = document.querySelector('#data-table tbody');
+                tableBody.innerHTML = rows;
+                openFile=true;
+                console.log('文件上传成功');
+            }).catch(function(error) {
+                // 文件上传失败的处理逻辑
+                console.error('文件上传失败:', error);
+            });
+        }
+
     </script>
 
 </head>
@@ -194,7 +335,7 @@
     <h1>抓包软件</h1>
 </header>
 
-<div class="container">
+<div class="container" style="margin-top: 0;">
     <div style="display: inline-block;">
         <form id="open" onsubmit="openCapture(); return false;" style="display: inline-block;">
             <button id="openButton" type="submit" class="styled-button">开始捕获</button>
@@ -202,6 +343,11 @@
         <form id="close" onsubmit="closeCapture(); return false;" style="display: inline-block;">
             <button type="submit" class="styled-button">停止捕获</button>
         </form>
+        <div style="display: inline-block;">
+            <button onclick="clearTableAndSendRequest()" class="styled-button" style="display: inline-block;flex: 1">
+                清空列表
+            </button>
+        </div>
     </div>
 
     <div style="display: flex;">
@@ -219,14 +365,13 @@
             <form onsubmit="downloadFile('导出成功','导出失败'); return false;" style="display: inline-block;">
                 <button type="submit" class="styled-button">导出文件</button>
             </form>
-            <form id="close2" style=" display: inline-block;">
-                <button type="submit" class="styled-button">设置过滤</button>
-            </form>
+
+            <button id="uploadButton" class="styled-button" onclick="uploadButton()">导入文件</button>
+            <input type="file" id="uploadFile" style="display: none;" />
         </div>
-        <div style="flex: 1">
-            <button onclick="clearTableAndSendRequest()" class="styled-button" style="display: inline-block;flex: 1">
-                清空列表
-            </button>
+        <div class="input-container" style="flex: 1">
+            <input type="text" id="dataInput" placeholder="输入过滤条件">
+            <button onclick="processData()"><i class="ri-arrow-right-s-line" style="font-size: 20px;"></i></button>
         </div>
     </div>
 </div>
@@ -237,14 +382,14 @@
         <h3>您是否要保存已经捕获的分组，否则将会丢失</h3>
         <div style="text-align: center;">
             <button onclick="save()" class="save-button">保存</button>
-            <button onclick="closeModal('modal')" class="save-button">不保存</button>
+            <button onclick="unSave('modal')" class="save-button">不保存</button>
         </div>
     </div>
 </div>
 
 <div id="detailInfo-modal1">
     <div id="detailInfo-modal2">
-        <span id="close-detailInfo" onclick="unSave()">&times;</span>
+        <span id="close-detailInfo" onclick="closeModal('detailInfo-modal1')">&times;</span>
         <div id="detailInfo-container"></div>
     </div>
 </div>
@@ -266,6 +411,11 @@
         <!-- 这里将动态添加数据行 -->
         </tbody>
     </table>
+</div>
+
+<div style="width: 100%;text-align: center;
+    position: fixed;bottom: 0;">
+    <h5>Copyright © 2023 Pipilong. 皮皮龙技术分享 版权所有</h5>
 </div>
 </body>
 </html>
