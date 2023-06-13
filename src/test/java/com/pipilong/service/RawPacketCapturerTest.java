@@ -35,7 +35,7 @@ public class RawPacketCapturerTest {
     }
 
     @Test
-    public void test2() throws IOException {
+    public void test2() throws IOException, CloneNotSupportedException {
         byte[] data = mMap.read("D:\\test2.pcap");
         pcapParser.parser(data);
     }

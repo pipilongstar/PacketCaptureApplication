@@ -16,6 +16,21 @@ public enum ProtocolType {
         return null;
     }
 
+    public static ProtocolType getProtocolByName(String name){
+        if("ipv4".equals(name)){
+            return IPv4;
+        }else if("arp".equals(name)){
+            return ARP;
+        }else if("ipv6".equals(name)){
+            return IPv6;
+        }else if("icmp".equals(name)){
+            return ICMP;
+        }else if("tcp".equals(name)){
+            return TCP;
+        }
+        return null;
+    }
+
     public static ProtocolType getProtocol(int type){
         switch (type){
             case 1 : return ICMP;
